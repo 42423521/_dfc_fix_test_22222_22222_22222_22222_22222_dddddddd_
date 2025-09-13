@@ -1,0 +1,90 @@
+//{
+ // "required": true,
+ // "minVersion": "0.7.11",
+//  "package": "com._test_ddddddd_.dfcfix.mixin",
+//  "compatibilityLevel": "JAVA_8",
+//  "mixins": [
+//    "TileEntityCoreMixin"
+//  ],
+//  "client": [],
+ // "server": []
+//}
+
+
+{
+	"package": "com._test_ddddddd_.dfcfix.mixin",
+	"required": true,
+	"refmap": "${mixin_refmap}",
+	"target": "@env(DEFAULT)",
+	"minVersion": "0.8.5",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		//"TileEntityCoreMixin"
+
+		//                                     "_t_e_c_m_dddddd_",
+
+
+
+//日你妈统一了的                                                                                                                                               草泥马,(),                                                                                                                                                                                                                     ,(),
+
+
+//
+
+
+	//	"TileEntityCoreTankMixin"
+
+	        //	"_t_d_d_d_d_d_d_d_"
+
+
+
+
+		"_t_e_c_m_dddddd_",       //.java"        son of bitch,(),      ,()<
+
+
+		//"_a_sddd_",//.java",
+
+
+		"_shit_dddddddd_mixin_item_test_fwk_kal_kah_ddddddd_",         //.java"
+
+
+
+
+
+
+
+
+
+//	、、	"MixinTileEntityCoreStabilizer_rnm_xbd_rnm_s_long_h_s_x_d_new_y_y_dddddddd_"
+
+
+
+	////////	"MixinTileEntityCoreStabilizer_rnm_xbd_rnm_s_long_h_s_x_d_new_y_y_dddddddd_",               //////////////////////////////.java"
+
+		
+////////////////////////////////////////////草泥马，不存在，哪个没save
+
+
+
+
+		"MixinTileEntityCoreStabilizer_rnm_xbd_rnm_s_long_h_s_x_d_new_y_y_dddddddd_222222_222222_222222_222222_222222_ddddd_",            //.java"
+
+
+
+
+
+
+
+
+
+
+
+		"_x_h_sp_zr_s_t_dddddddddd_"
+
+
+
+
+
+	],
+	"server": [],
+	"client": []
+}

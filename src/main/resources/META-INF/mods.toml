@@ -1,0 +1,9 @@
+# mods.toml for newer systems; for 1.12 it's optional but harmless
+modLoader="javafml"
+loaderVersion="[8,)"
+license="MIT"
+[[mods]]
+modId="dfcfix"
+version="1.0"
+displayName="DFC Fix"
+description='''Minimal mod to control DFC explosion behavior (mixin example).'''

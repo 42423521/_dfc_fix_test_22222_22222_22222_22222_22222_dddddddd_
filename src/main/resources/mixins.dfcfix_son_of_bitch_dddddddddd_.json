@@ -1,0 +1,49 @@
+//{
+ // "required": true,
+ // "minVersion": "0.7.11",
+//  "package": "com._test_ddddddd_.dfcfix.mixin",
+//  "compatibilityLevel": "JAVA_8",
+//  "mixins": [
+//    "TileEntityCoreMixin"
+//  ],
+//  "client": [],
+ // "server": []
+//}
+
+
+{
+	"package": "com._test_ddddddd_.dfcfix.mixin",
+	"required": true,
+	"refmap": "${mixin_refmap}",
+	"target": "@env(DEFAULT)",
+	"minVersion": "0.8.5",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		//"TileEntityCoreMixin"
+
+		"_t_e_c_m_dddddd_",
+
+
+
+//日你妈统一了的                                                                                                                                               草泥马,(),                                                                                                                                                                                                                     ,(),
+
+
+//
+
+
+	//	"TileEntityCoreTankMixin"
+
+	        //	"_t_d_d_d_d_d_d_d_"
+
+
+
+		"_x_h_sp_zr_s_t_dddddddddd_"
+
+
+
+
+
+	],
+	"server": [],
+	"client": []
+}

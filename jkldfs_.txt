@@ -1,0 +1,660 @@
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\ExplosionControl.java ===
+package com._test_ddddddd_.dfcfix;
+
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+/**
+ * 一个非常简单的爆炸控制器：
+ * 默认开启阻止爆炸（可由命令切换）
+ *
+ * 注意：取消 ExplosionEvent.Start 会阻止爆炸发生。
+ */
+public class ExplosionControl {
+    // 默认：不开启爆炸（true 表示阻止爆炸）
+    private static boolean blockExplosions = false;
+
+    public static boolean isBlockExplosions() {
+        return blockExplosions;
+    }
+
+    public static void setBlockExplosions(boolean block) {
+        blockExplosions = block;
+    }
+
+    public static void toggle() {
+        blockExplosions = !blockExplosions;
+    }
+
+    @SubscribeEvent
+    public void onExplosionStart(ExplosionEvent.Start event) {
+        if (blockExplosions) {
+            // Cancel 会阻止接下来的爆炸逻辑
+            event.setCanceled(true);
+        }
+    }
+}
+
+
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\testmod.java ===
+package com._test_ddddddd_.dfcfix;
+
+import com._test_ddddddd_.dfcfix.dfcmod.DfcMixinLoader;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import com._test_ddddddd_.dfcfix.command.CommandDfcFix;
+
+@Mod(modid = TestMod.MODID, name = "DFC Fix", version = TestMod.VERSION, acceptableRemoteVersions = "*")
+public class TestMod {
+    public static final String MODID = "dfcfix";
+    // Gradle 可以替换这个字符串，或者你自己修改
+    public static final String VERSION = "0.0.1";
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        // 初始化 mixin（如果有 mixin）
+        DfcMixinLoader.init();
+
+        // 注册事件总线里的爆炸控制
+        MinecraftForge.EVENT_BUS.register(new ExplosionControl());
+    }
+
+    @EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        // 注册服务器命令
+        event.registerServerCommand(new CommandDfcFix());
+    }
+}
+
+
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\新建文本文档.txt ===
+
+
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\command\commanddfcfix.java ===
+package com._test_ddddddd_.dfcfix.command;
+
+import com._test_ddddddd_.dfcfix.ExplosionControl;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CommandDfcFix extends CommandBase {
+    @Override
+    public String getName() {
+        return "dfcfix";
+    }
+
+    @Override
+    public String getUsage(ICommandSender sender) {
+        return "/dfcfix explosions <on|off|toggle|status>";
+    }
+
+    @Override
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage(new TextComponentString("Usage: " + getUsage(sender)));
+            return;
+        }
+
+        String sub = args[0].toLowerCase();
+        switch (sub) {
+            case "on":
+                ExplosionControl.setBlockExplosions(true);
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = ON"));
+                break;
+            case "off":
+                ExplosionControl.setBlockExplosions(false);
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = OFF"));
+                break;
+            case "toggle":
+                ExplosionControl.toggle();
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions toggled. Now = " + ExplosionControl.isBlockExplosions()));
+                break;
+            case "status":
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = " + ExplosionControl.isBlockExplosions()));
+                break;
+            default:
+                sender.sendMessage(new TextComponentString("Unknown subcommand. " + getUsage(sender)));
+                break;
+        }
+    }
+
+    @Override
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, net.minecraft.util.math.BlockPos targetPos) {
+        if (args.length == 1) {
+            List<String> l = new ArrayList<>();
+            l.add("on");
+            l.add("off");
+            l.add("toggle");
+            l.add("status");
+            return getListOfStringsMatchingLastWord(args, l);
+        }
+        return super.getTabCompletions(server, sender, args, targetPos);
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+        // 0 = anyone, 2 = ops; 2 更安全
+        return 2;
+    }
+}
+
+
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\dfcmod\dfcmixinloader.java ===
+package com._test_ddddddd_.dfcfix.dfcmod;
+
+/**
+ * 初始化 Mixin（如果你在项目里用到 mixin）
+ *
+ * 兼容 1.12 环境下的 Mixin 初始化方式：
+ * MixinBootstrap.init();
+ * Mixins.addConfiguration("mixins.dfcfix.json");
+ *
+ * 如果没有引入 mixin runtime（或 RFG 在运行时自动注入）也不会崩溃，这里捕获异常打印。
+ */
+public class DfcMixinLoader {
+    public static void init() {
+        try {
+            // runtime classes
+            Class.forName("org.spongepowered.asm.launch.MixinBootstrap");
+            // call MixinBootstrap.init()
+            org.spongepowered.asm.launch.MixinBootstrap.init();
+            org.spongepowered.asm.mixin.Mixins.addConfiguration("mixins.dfcfix.json");
+        } catch (Throwable t) {
+            // 如果 mixin 库不可用（例如没有在运行时注入），打印日志但不抛出
+            t.printStackTrace();
+        }
+    }
+}
+
+
+=== Y:\新建文件夹 (278)\ForgeDevEnv-master\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\mixin\tileentitycoremixin.java ===
+package com._test_ddddddd_.dfcfix.mixin;
+
+import net.minecraft.tileentity.TileEntity;
+import org.spongepowered.asm.mixin.Mixin;
+
+/**
+ * 一个安全的空 mixin（仅声明目标类）。
+ * 如果你要在这里注入/重写方法，请谨慎修改并测试。
+ */
+@Mixin(TileEntity.class)
+public abstract class TileEntityCoreMixin {
+    // 目前不做任何注入 —— 危险操作请先在单独环境里测试
+}
+
+
+另一个ai 写的
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=== .\src\main\java\com\_test_ddddddd_.7z ===
+[Binary file or unreadable content]
+
+=== .\src\main\java\com\example\modid\ExampleMod.java ===
+package com.example.modid;
+
+import com.example.modid.Tags;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+@Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION)
+public class ExampleMod {
+
+    public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
+
+    /**
+     * <a href="https://cleanroommc.com/wiki/forge-mod-development/event#overview">
+     *     Take a look at how many FMLStateEvents you can listen to via the @Mod.EventHandler annotation here
+     * </a>
+     */
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        LOGGER.info("Hello From {}!", Tags.MOD_NAME);
+    }
+
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_\dfcfix\ExplosionControl.java ===
+package com._test_ddddddd_.dfcfix;
+
+public class ExplosionControl {
+    public static volatile boolean disableExplosions = false;
+
+    public static boolean shouldDisable() {
+        return disableExplosions;
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_\dfcfix\TestMod.java ===
+package com._test_ddddddd_.dfcfix;
+
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+
+@Mod(modid = TestMod.MODID, name = TestMod.NAME, version = TestMod.VERSION, acceptableRemoteVersions = "*")
+public class TestMod {
+    public static final String MODID = "dfcfix";
+    public static final String NAME = "DFC Fix";
+    public static final String VERSION = "1.0";
+
+    @Mod.EventHandler
+    public void init(FMLInitializationEvent e) {
+        System.out.println("DFC Fix mod init");
+    }
+
+    @Mod.EventHandler
+    public void serverLoad(FMLServerStartingEvent event) {
+        // Register command
+        event.registerServerCommand(new com._test_ddddddd_.dfcfix.command.CommandDfcFix());
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_\dfcfix\command\CommandDfcFix.java ===
+package com._test_ddddddd_.dfcfix.command;
+
+import com._test_ddddddd_.dfcfix.ExplosionControl;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
+
+public class CommandDfcFix extends CommandBase {
+
+    @Override
+    public String getName() {
+        return "dfcfix";
+    }
+
+    @Override
+    public String getUsage(ICommandSender sender) {
+        return "/dfcfix toggleexplosion - toggle explosion blocking";
+    }
+
+    @Override
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        if (args.length > 0 && "toggleexplosion".equalsIgnoreCase(args[0])) {
+            ExplosionControl.disableExplosions = !ExplosionControl.disableExplosions;
+            sender.sendMessage(new TextComponentString("Explosion disable = " + ExplosionControl.disableExplosions));
+        } else {
+            sender.sendMessage(new TextComponentString(getUsage(sender)));
+        }
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+        return 2;
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_\dfcfix\dfcmod\DfcMixinLoader.java ===
+package com._test_ddddddd_.dfcfix;
+
+import zone.rong.mixinbooter.ILateMixinLoader;
+import java.util.Arrays;
+import java.util.List;
+
+public class DfcMixinLoader implements ILateMixinLoader {
+    @Override
+    public List<String> getMixinConfigs() {
+        return Arrays.asList("mixins.dfcfix.json");
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_\dfcfix\mixin\TileEntityCoreMixin.java ===
+package com._test_ddddddd_.dfcfix.mixin;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.objectweb.asm.Opcodes;
+import com._test_ddddddd_.dfcfix.ExplosionControl;
+
+@Mixin(targets = "com.hbm.tileentity.machine.TileEntityCore")
+public class TileEntityCoreMixin {
+
+    @Redirect(
+        method = "update",
+        at = @At(
+            value = "FIELD",
+            target = "Lcom/hbm/tileentity/machine/TileEntityCore;heat:I",
+            opcode = Opcodes.GETFIELD
+        )
+    )
+    private int redirectGetHeat(Object instance) {
+        if (ExplosionControl.shouldDisable()) {
+            return 0;
+        }
+        try {
+            java.lang.reflect.Field f = instance.getClass().getDeclaredField("heat");
+            f.setAccessible(true);
+            return f.getInt(instance);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\ExplosionControl.java ===
+package com._test_ddddddd_.dfcfix;
+
+import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.event.world.ExplosionEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+/**
+ * 一个非常简单的爆炸控制器：
+ * 默认开启阻止爆炸（可由命令切换）
+ *
+ * 注意：取消 ExplosionEvent.Start 会阻止爆炸发生。
+ */
+public class ExplosionControl {
+    // 默认：不开启爆炸（true 表示阻止爆炸）
+    private static boolean blockExplosions = false;
+
+    public static boolean isBlockExplosions() {
+        return blockExplosions;
+    }
+
+    public static void setBlockExplosions(boolean block) {
+        blockExplosions = block;
+    }
+
+    public static void toggle() {
+        blockExplosions = !blockExplosions;
+    }
+
+    @SubscribeEvent
+    public void onExplosionStart(ExplosionEvent.Start event) {
+        if (blockExplosions) {
+            // Cancel 会阻止接下来的爆炸逻辑
+            event.setCanceled(true);
+        }
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\testmod.java ===
+package com._test_ddddddd_.dfcfix;
+
+import com._test_ddddddd_.dfcfix.dfcmod.DfcMixinLoader;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import com._test_ddddddd_.dfcfix.command.CommandDfcFix;
+
+@Mod(modid = TestMod.MODID, name = "DFC Fix", version = TestMod.VERSION, acceptableRemoteVersions = "*")
+public class TestMod {
+    public static final String MODID = "dfcfix";
+    // Gradle 可以替换这个字符串，或者你自己修改
+    public static final String VERSION = "0.0.1";
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        // 初始化 mixin（如果有 mixin）
+        DfcMixinLoader.init();
+
+        // 注册事件总线里的爆炸控制
+        MinecraftForge.EVENT_BUS.register(new ExplosionControl());
+    }
+
+    @EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        // 注册服务器命令
+        event.registerServerCommand(new CommandDfcFix());
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\新建文本文档.txt ===
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\command\commanddfcfix.java ===
+package com._test_ddddddd_.dfcfix.command;
+
+import com._test_ddddddd_.dfcfix.ExplosionControl;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CommandDfcFix extends CommandBase {
+    @Override
+    public String getName() {
+        return "dfcfix";
+    }
+
+    @Override
+    public String getUsage(ICommandSender sender) {
+        return "/dfcfix explosions <on|off|toggle|status>";
+    }
+
+    @Override
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage(new TextComponentString("Usage: " + getUsage(sender)));
+            return;
+        }
+
+        String sub = args[0].toLowerCase();
+        switch (sub) {
+            case "on":
+                ExplosionControl.setBlockExplosions(true);
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = ON"));
+                break;
+            case "off":
+                ExplosionControl.setBlockExplosions(false);
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = OFF"));
+                break;
+            case "toggle":
+                ExplosionControl.toggle();
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions toggled. Now = " + ExplosionControl.isBlockExplosions()));
+                break;
+            case "status":
+                sender.sendMessage(new TextComponentString("[dfcfix] Block explosions = " + ExplosionControl.isBlockExplosions()));
+                break;
+            default:
+                sender.sendMessage(new TextComponentString("Unknown subcommand. " + getUsage(sender)));
+                break;
+        }
+    }
+
+    @Override
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, net.minecraft.util.math.BlockPos targetPos) {
+        if (args.length == 1) {
+            List<String> l = new ArrayList<>();
+            l.add("on");
+            l.add("off");
+            l.add("toggle");
+            l.add("status");
+            return getListOfStringsMatchingLastWord(args, l);
+        }
+        return super.getTabCompletions(server, sender, args, targetPos);
+    }
+
+    @Override
+    public int getRequiredPermissionLevel() {
+        // 0 = anyone, 2 = ops; 2 更安全
+        return 2;
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\dfcmod\dfcmixinloader.java ===
+package com._test_ddddddd_.dfcfix.dfcmod;
+
+/**
+ * 初始化 Mixin（如果你在项目里用到 mixin）
+ *
+ * 兼容 1.12 环境下的 Mixin 初始化方式：
+ * MixinBootstrap.init();
+ * Mixins.addConfiguration("mixins.dfcfix.json");
+ *
+ * 如果没有引入 mixin runtime（或 RFG 在运行时自动注入）也不会崩溃，这里捕获异常打印。
+ */
+public class DfcMixinLoader {
+    public static void init() {
+        try {
+            // runtime classes
+            Class.forName("org.spongepowered.asm.launch.MixinBootstrap");
+            // call MixinBootstrap.init()
+            org.spongepowered.asm.launch.MixinBootstrap.init();
+            org.spongepowered.asm.mixin.Mixins.addConfiguration("mixins.dfcfix.json");
+        } catch (Throwable t) {
+            // 如果 mixin 库不可用（例如没有在运行时注入），打印日志但不抛出
+            t.printStackTrace();
+        }
+    }
+}
+
+
+=== .\src\main\java\com\_test_ddddddd_fjklsdjklfsdjkl_shit_shit_grd_lj_ddddddd_bg_y_ddddd_old_yg_lyg_x_d_dddd_\_test_ddddddd_\dfcfix\mixin\tileentitycoremixin.java ===
+package com._test_ddddddd_.dfcfix.mixin;
+
+import net.minecraft.tileentity.TileEntity;
+import org.spongepowered.asm.mixin.Mixin;
+
+/**
+ * 一个安全的空 mixin（仅声明目标类）。
+ * 如果你要在这里注入/重写方法，请谨慎修改并测试。
+ */
+@Mixin(TileEntity.class)
+public abstract class TileEntityCoreMixin {
+    // 目前不做任何注入 —— 危险操作请先在单独环境里测试
+}
+
+
+=== .\src\main\resources\mcmod.info ===
+[{
+	"modid": "${mod_id}",
+	"name": "${mod_name}",
+	"version": "${mod_version}",
+	"mcversion": "1.12.2",
+	"description": "${mod_description}",
+	"authorList": ["${mod_authors}"],
+	"credits": "${mod_credits}",
+	"url": "${mod_url}",
+	"updateJSON": "${mod_update_json}",
+	"logoFile": "${mod_logo_path}"
+}]
+
+
+[
+  {
+    "modid": "dfcfix",
+    "name": "DFC Fix_",
+    "description": "Small mod to control explosions and provide small fixes.",
+    "version": "0.0.1",
+    "mcversion": "1.12.2",
+    "url": "",
+    "authorList": ["gpt5","hnm","出生",""],
+    "credits": "",
+    "logoFile": "./test_.png",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
+
+
+=== .\src\main\resources\mcmod_fjdkls_dddddd_.info ===
+[{
+	"modid": "${mod_id}",
+	"name": "${mod_name}",
+	"version": "${mod_version}",
+	"mcversion": "1.12.2",
+	"description": "${mod_description}",
+	"authorList": ["${mod_authors}"],
+	"credits": "${mod_credits}",
+	"url": "${mod_url}",
+	"updateJSON": "${mod_update_json}",
+	"logoFile": "${mod_logo_path}"
+}]
+
+=== .\src\main\resources\mixins.dfcfix.json ===
+{
+  "required": true,
+  "minVersion": "0.7.11",
+  "package": "com._test_ddddddd_.dfcfix.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "TileEntityCoreMixin"
+  ],
+  "client": [],
+  "server": []
+}
+
+
+=== .\src\main\resources\mixins.modid.json ===
+{
+	"package": "",
+	"required": true,
+	"refmap": "${mixin_refmap}",
+	"target": "@env(DEFAULT)",
+	"minVersion": "0.8.5",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [],
+	"server": [],
+	"client": []
+}
+
+=== .\src\main\resources\pack.mcmeta ===
+{
+	"pack": {
+		"description": "${mod_name} Resources",
+		"pack_format": 3
+	}
+}
+
+=== .\src\main\resources\META-INF\mods.toml ===
+# mods.toml for newer systems; for 1.12 it's optional but harmless
+modLoader="javafml"
+loaderVersion="[8,)"
+license="MIT"
+[[mods]]
+modId="dfcfix"
+version="1.0"
+displayName="DFC Fix"
+description='''Minimal mod to control DFC explosion behavior (mixin example).'''
+
+
+你写的,(),           ,(),
+ 

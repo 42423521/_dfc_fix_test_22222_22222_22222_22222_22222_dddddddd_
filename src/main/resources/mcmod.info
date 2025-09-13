@@ -1,0 +1,29 @@
+[{
+	"modid": "${mod_id}",
+	"name": "${mod_name}",
+	"version": "${mod_version}",
+	"mcversion": "1.12.2",
+	"description": "${mod_description}",
+	"authorList": [${mod_authors}],//["${mod_authors}"],
+	"credits": "${mod_credits}",
+	"url": "${mod_url}",
+	"updateJSON": "${mod_update_json}",
+	"logoFile": "${mod_logo_path}"
+}]
+
+
+//[
+//  {
+//    "modid": "dfcfix",
+ //   "name": "DFC Fix_",
+//    "description": "Small mod to control explosions and provide small fixes.",
+ //   "version": "0.0.1",
+//    "mcversion": "1.12.2",
+ ////////////////////   "url": "",
+ //   "authorList": ["gpt5","hnm","出生",""],
+  ///////////////////////////////////  "credits": "",
+ //   "logoFile": "./test_.png",
+ ///////   "screenshots": [],
+  ///////  "dependencies": []
+ // }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////]

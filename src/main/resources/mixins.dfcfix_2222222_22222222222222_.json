@@ -1,0 +1,25 @@
+
+{
+	"package": "com._test_ddddddd_.dfcfix.mixin",
+	"required": true,
+	"refmap": "${mixin_refmap}",
+	"target": "@env(DEFAULT)",
+	"minVersion": "0.8.5",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+	
+
+		"_t_e_c_m_dddddd_",
+
+
+		
+		"_x_h_sp_zr_s_t_dddddddddd_"
+
+
+
+
+
+	],
+	"server": [],
+	"client": []
+}

@@ -1,0 +1,166 @@
+// 需要的 imports（放文件头）
+// import net.minecraft.command.ICommandSender;
+// import net.minecraft.nbt.NBTTagCompound;
+// import net.minecraft.tileentity.TileEntity;
+// import net.minecraft.util.math.BlockPos;
+// import net.minecraft.block.state.IBlockState;
+// import net.minecraft.util.text.TextComponentString;
+// import net.minecraft.world.World;
+// import com.hbm.tileentity.machine.TileEntityCore;
+
+private void handleSet_2_(ICommandSender sender, int x, int y, int z, int fuelMax) {
+    World world = sender.getEntityWorld();
+    BlockPos pos = new BlockPos(x, y, z);
+
+    TileEntity teRaw = world.getTileEntity(pos);
+    if (!(teRaw instanceof TileEntityCore)) {
+        sender.addChatMessage(new TextComponentString("No core at " + pos));
+        return;
+    }
+
+    TileEntityCore te = (TileEntityCore) teRaw;
+
+    try {
+        // 1) 写入 NBT（持久化供 mixin/其他逻辑读取）
+        NBTTagCompound data = te.getTileData();
+        data.setInteger("fuelMax", fuelMax);   // 用于限制每次 drain（你 mixin 里读这个 key）
+        data.setInteger("tankCap", fuelMax);   // 同时把 tank 容量也存到 nbt（你 mixin 里 write/read 要一致）
+        te.markDirty();
+
+        // 2) 通知区块更新，强制客户端刷新显示
+        IBlockState state = world.getBlockState(pos);
+        world.notifyBlockUpdate(pos, state, state, 3);
+
+        // 3) 立即在运行时尝试把 tanks 的容量改掉并截断现有液体（即时生效）
+        //    这里优先调用你放在项目里的 UtilsDFCFix（如果有），否则用内联方式。
+        try {
+            // 若你已经添加了 UtilsDFCFix 类，下面这一行就够：
+            UtilsDFCFix.applyTankCapRealtime((Object) te, world, pos, fuelMax);
+        } catch (NoClassDefFoundError | Throwable e) {
+            // 如果没有 UtilsDFCFix（或者想直接内联），我们做一个最小回退（best-effort）
+            try {
+                // 简短回退：反射取 tanks 字段并尝试写 capacity（不保证所有自定义实现命中）
+                String[] tankFieldNames = new String[] {"tanks", "fluidTanks", "tankArray"};
+                Object[] tanksArr = null;
+                for (String name : tankFieldNames) {
+                    try {
+                        java.lang.reflect.Field f = te.getClass().getDeclaredField(name);
+                        f.setAccessible(true);
+                        Object arr = f.get(te);
+                        if (arr != null) {
+                            int len = java.lang.reflect.Array.getLength(arr);
+                            tanksArr = new Object[len];
+                            for (int i = 0; i < len; i++) tanksArr[i] = java.lang.reflect.Array.get(arr, i);
+                        }
+                        break;
+                    } catch (NoSuchFieldException ignore) {}
+                }
+                if (tanksArr != null) {
+                    for (Object tank : tanksArr) {
+                        if (tank == null) continue;
+                        // 优先处理官方 Forge FluidTank（反射，不需要编译期依赖）
+                        try {
+                            Class<?> forgeTankCls = Class.forName("net.minecraftforge.fluids.FluidTank");
+                            if (forgeTankCls.isAssignableFrom(tank.getClass())) {
+                                try {
+                                    java.lang.reflect.Field capField = forgeTankCls.getDeclaredField("capacity");
+                                    capField.setAccessible(true);
+                                    capField.setInt(tank, fuelMax);
+                                } catch (NoSuchFieldException ignore) {}
+                                // 截断 FluidStack.amount
+                                try {
+                                    java.lang.reflect.Method getFluid = forgeTankCls.getMethod("getFluid");
+                                    Object fs = getFluid.invoke(tank);
+                                    if (fs != null) {
+                                        Class<?> fsCls = Class.forName("net.minecraftforge.fluids.FluidStack");
+                                        try {
+                                            java.lang.reflect.Field amtF = fsCls.getDeclaredField("amount");
+                                            amtF.setAccessible(true);
+                                            int now = amtF.getInt(fs);
+                                            if (now > fuelMax) {
+                                                java.lang.reflect.Method getFluidMeth = fsCls.getMethod("getFluid");
+                                                Object fluidObj = getFluidMeth.invoke(fs);
+                                                Object newFs = fsCls.getConstructor(fluidObj.getClass(), int.class).newInstance(fluidObj, fuelMax);
+                                                java.lang.reflect.Method setFluid = forgeTankCls.getMethod("setFluid", fsCls);
+                                                setFluid.invoke(tank, newFs);
+                                            }
+                                        } catch (NoSuchFieldException nf) {}
+                                    }
+                                } catch (NoSuchMethodException ignore) {}
+                                System.out.println("[DFCFIX CMD] applied Forge FluidTank capacity -> " + fuelMax + " on " + tank.getClass().getName());
+                                continue;
+                            }
+                        } catch (ClassNotFoundException cnf) {
+                            // 没有 Forge FluidTank 类的话，走下面通用反射
+                        }
+
+                        // 通用反射（尝试 setter 或字段）
+                        Class<?> cls = tank.getClass();
+                        boolean applied = false;
+                        String[] capSetters = new String[] {"setCapacity", "setMaxFill", "setMax", "setMaxAmount", "setCapacityMB"};
+                        String[] capFields = new String[] {"capacity", "maxFill", "max_fill", "maxFillAmount", "max", "maxAmount"};
+                        for (String mname : capSetters) {
+                            try {
+                                java.lang.reflect.Method m = cls.getMethod(mname, int.class);
+                                m.setAccessible(true);
+                                m.invoke(tank, fuelMax);
+                                applied = true;
+                                break;
+                            } catch (NoSuchMethodException ignore) {}
+                        }
+                        if (!applied) {
+                            for (String fname : capFields) {
+                                try {
+                                    java.lang.reflect.Field ff = cls.getDeclaredField(fname);
+                                    ff.setAccessible(true);
+                                    ff.setInt(tank, fuelMax);
+                                    applied = true;
+                                    break;
+                                } catch (NoSuchFieldException ignore) {}
+                            }
+                        }
+                        // 截断 fill/amount
+                        try {
+                            Integer now = null;
+                            try {
+                                java.lang.reflect.Method gm = cls.getMethod("getFill");
+                                Object v = gm.invoke(tank);
+                                if (v instanceof Integer) now = (Integer) v;
+                            } catch (NoSuchMethodException ignore) {}
+                            if (now != null && now > fuelMax) {
+                                try {
+                                    java.lang.reflect.Method sm = cls.getMethod("setFill", int.class);
+                                    sm.invoke(tank, fuelMax);
+                                } catch (NoSuchMethodException ignore) {
+                                    String[] altAmt = new String[] {"amount", "fill", "fluidAmount"};
+                                    for (String af : altAmt) {
+                                        try {
+                                            java.lang.reflect.Field f = cls.getDeclaredField(af);
+                                            f.setAccessible(true);
+                                            f.setInt(tank, fuelMax);
+                                            break;
+                                        } catch (NoSuchFieldException ignore2) {}
+                                    }
+                                }
+                            }
+                        } catch (Throwable tt) {
+                            tt.printStackTrace();
+                        }
+
+                        System.out.println("[DFCFIX CMD] attempted apply to tank class " + tank.getClass().getName() + " cap=" + fuelMax);
+                    } // end for tanks
+                } // end if tanksArr
+            } catch (Throwable inlErr) {
+                inlErr.printStackTrace();
+            }
+        } // end try Utils call
+
+        // 最后反馈给命令发起者
+        sender.addChatMessage(new TextComponentString("Set fuelMax=" + fuelMax + " at " + pos));
+        System.out.println("[DFCFIX CMD] set fuelMax=" + fuelMax + " at " + pos);
+
+    } catch (Throwable ex) {
+        ex.printStackTrace();
+        sender.addChatMessage(new TextComponentString("Error applying fuelMax: " + ex.getMessage()));
+    }
+}
