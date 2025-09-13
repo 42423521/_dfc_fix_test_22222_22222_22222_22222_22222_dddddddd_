@@ -1,3 +1,11 @@
+
+<details>
+<summary>点击展开 / 折叠原 ()</summary>
+
+kil_a_h_
+fjdklsjklfjsdklj
+
+
 ## TemplateDevEnv
 _For Kotlin see [TemplateDevEnvKt](https://github.com/CleanroomMC/TemplateDevEnvKt)_
 
@@ -20,6 +28,11 @@ With **coremod and mixin support** that is easy to configure.
 - Publishing script in [gradle/scripts/publishing.gradle](gradle/scripts/publishing.gradle).
 - When writing Mixins on IntelliJ, it is advisable to use latest [MinecraftDev Fork for RetroFuturaGradle](https://github.com/eigenraven/MinecraftDev/releases).
 
+</details>
+
+
+
+
 
 
 旧的懒得删了，就上传跑路,(),
@@ -41,6 +54,35 @@ dfcfix
           ,(), 
 
 
+
+
+
+
+
+
+
+
+
+
           cnmmmmmmm
+
+
+
+
+
+
+
+
+
+
+    x d f k s c d           z y g n n m z z ,  son of bitch,(),
+
+    ,(), 
+
+    md
+
+    c fuck,(),
+
+    ,(),
 
           shit shit shit shti shti
