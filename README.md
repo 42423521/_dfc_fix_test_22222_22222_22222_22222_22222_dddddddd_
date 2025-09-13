@@ -19,3 +19,28 @@ With **coremod and mixin support** that is easy to configure.
 - Dependencies script in [gradle/scripts/dependencies.gradle](gradle/scripts/dependencies.gradle), explanations are commented in the file.
 - Publishing script in [gradle/scripts/publishing.gradle](gradle/scripts/publishing.gradle).
 - When writing Mixins on IntelliJ, it is advisable to use latest [MinecraftDev Fork for RetroFuturaGradle](https://github.com/eigenraven/MinecraftDev/releases).
+
+
+
+旧的懒得删了，就上传跑路,(),
+
+,(),
+
+dfcfix
+
+
+
+
+
+
+
+          f k g      w s m y y q g,(),
+
+          ,(),                                      d r x            d r x d  f k s c d d d d d d d d d d d  dddddddddddddddddd                      d r x d f k s c d d d d,(),
+
+          ,(), 
+
+
+          cnmmmmmmm
+
+          shit shit shit shti shti
